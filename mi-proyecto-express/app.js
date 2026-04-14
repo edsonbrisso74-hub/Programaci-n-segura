@@ -1,16 +1,25 @@
-const express = require( 'express');
+const express = require('express');
+const cookieParser = require('cookie-parser');
+require('dotenv').config();
+
 const app = express();
 const privateRoutes = require('./routes/privateRoute');
 const authController = require('./controllers/authController');
 
 app.use(express.json());
+app.use(cookieParser());
 
-//Ruta pública para login
+// Ruta pública para login
 app.post('/login', authController.login);
 
-//Ruta protegida
+// Ruta pública para logout
+app.post('/logout', authController.logout);
+
+// Ruta protegida
 app.use('/private', privateRoutes);
 
-app.listen(3000, () => {
-    console.log('Servidor corriendo en puerto 3000')
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
 });

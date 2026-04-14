@@ -1,50 +1,62 @@
 const jwt = require('jsonwebtoken');
 
-//Clve secreta (deberia estar en variable de entorno)
-const SECRET_KEY = process.env.JWR_SECRET || 'mi_secreto_super_seguro_2026';
+// Clave secreta (idealmente desde variable de entorno)
+const SECRET_KEY = process.env.JWT_SECRET || 'mi_secreto_super_seguro_2026';
 
-// ✅ Array de usuarios ficticios
+// Array de usuarios ficticios
 const usuarios = [
   { id: 1, username: 'estudiante', password: '1234' },
-  { id: 2, username: 'profesor',   password: 'abcd' }
+  { id: 2, username: 'profesor', password: 'abcd' }
 ];
 
 exports.login = (req, res) => {
-    const { username, password } = req.body;
+  const { username, password } = req.body;
 
-  // ✅ Validar credenciales contra el array
+  // Validar que se envíen credenciales
+  if (!username || !password) {
+    return res.status(400).json({
+      message: 'Debe ingresar usuario y contraseña.'
+    });
+  }
+
+  // Validar credenciales contra el array
   const usuario = usuarios.find(
     u => u.username === username && u.password === password
   );
 
-    if (!usuario) {
-    // ✅ Respuesta 401 si las credenciales son incorrectas
+  // Si las credenciales son incorrectas
+  if (!usuario) {
     return res.status(401).json({
       message: 'Credenciales incorrectas. No autorizado.'
     });
   }
-    //Generar el token (payload, secret, options)
-    const payload = { id: usuario.id, username: usuario.username };
-    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
 
-    //  Enviar token como cookie httpOnly
-    res.cookie('token', token, {
+  // Generar el token
+  const payload = { id: usuario.id, username: usuario.username };
+  const token = jwt.sign(payload, SECRET_KEY, { expiresIn: '1h' });
+
+  // Enviar token como cookie httpOnly
+  res.cookie('token', token, {
     httpOnly: true,
-    secure: false, // ← Cambiar a true si usas HTTPS
+    secure: false,
     sameSite: 'strict',
-    maxAge: 60 * 60 * 1000 // 1 hora en milisegundos
+    maxAge: 60 * 60 * 1000
   });
 
-    res.json({ mensaje: 'Autenticación exitosa'});
+  return res.status(200).json({
+    message: 'Autenticación exitosa'
+  });
 };
 
 exports.logout = (req, res) => {
-  // ✅ Eliminar la cookie para cerrar sesión
+  // Eliminar cookie
   res.clearCookie('token', {
     httpOnly: true,
-    secure: false, // igual que al crearla
+    secure: false,
     sameSite: 'strict'
   });
 
-  res.json({ message: 'Sesión cerrada correctamente' });
+  return res.status(200).json({
+    message: 'Sesión cerrada correctamente'
+  });
 };
